@@ -3,8 +3,9 @@
 import numpy as np
 
 
-def get_single_gate(s):
-    match s:
+def get_single_gate(gate):
+    # function to get matrix for single qbit gate
+    match gate:
         case "X":
             return np.array([[0, 1], [1, 0]])
         case "Y":
@@ -23,8 +24,9 @@ def get_single_gate(s):
             raise ValueError("Invalid gate")
 
 
-def get_double_gate(s):
-    match s:
+def get_double_gate(gate):
+    # function to get matrix for two qbit gate
+    match gate:
         case "CX":
             return np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
         case "CY":
