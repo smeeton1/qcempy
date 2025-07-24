@@ -25,6 +25,26 @@ class MPS:
       sedlf.qbit[indices]= np.dot(gate, self.qbit[indices])
 
 
+    def swap_qubits(self, qubit1, qubit2):
+        #function to swap two qubits
+        indices1 = np.where(self.order == qubit1)
+        indices2 = np.where(self.order == qubit2)
+        gate = qg.get_double_gate("SWAP")
+        self.qbit[indices1], self.qbit[indices2] = np.dot(gate, self.qbit[indices1]), np.dot(gate, self.qbit[indices2])
+        qb2 = np.dot(gate, qb2)
+        self.svd_2qubit(self,indices1, indices2 gb2)
+        hold = self.order[indices2]
+        self.order[indices2] = self.order[indices1]
+        self.order[indices1] = hold
+
+
+    def svd_2qubit(self,indices1, indices2 gb2):
+        #function to perform svd on a 2 qbit tensor
+        U,S,V =np.linalg.svd(gb2 , full_matrices=False)
+        self.qbit[indices1] = U[:,0] 
+        self.Lambda[indices1] = S[0] 
+        self.qbit[indices2] = V[0,:]
+
     def add_double_gate(self, qbit1, qbit2, gate):
         #function to add a gate that effects two qubits
         indices1 = np.where(self.order == qbit1)
@@ -33,33 +53,22 @@ class MPS:
             swapindices = min(indices1, indices2)
             finalindices = max(indices1, indices2)
             while swapindices < finalindices-1:
-                self.add_double_gate(swapindices, swapindices + 1, "SWAP")
-                hold = self.order[swapindices+1]
-                self.order[swapindices +1] = self.order[swapindices]
-                self.order[swapindices] = hold
+                self.swap_qubits(swapindices, swapindices + 1)
                 swapindices += 1
             if self.order[swapindices] == qbit1:
                 indices1 = swapindices
                 indices2 = finalindices
             else:
-                self.add_double_gate(swapindices, finalindices, "SWAP")
-                hold = self.order[finalindices]
-                self.order[finalindices] = self.order[swapindices]
-                self.order[swapindices] = hold
+                self.swap_qubits(swapindices, finalindices)
                 indices1 = swapindices
                 indices2 = finalindices
         if indices1 > indices2:
-            self.add_double_gate(indices2, indices1, "SWAP")
-            hold = self.order[indices2]
-            self.order[indices2] = self.order[indices1]
-            self.order[indices1] = hold
+            self.swap_qubits(indices2, indices1)
 
         if gate.isstring:
             gate = qg.get_double_gate(gate)
 
         qb2 = np.tensordot(np.tensordot(self.qbit[indices1],self.Lambda[indices1],0),self.qbit[indices2],0)
         qb2 = np.dot(gate, qb2)
-        U,S,V =np.linalg.svd(qb2 , full_matrices=False)
-        self.qbit[indices1] = U[:,0] 
-        self.Lambda[indices1] = S[0] 
-        self.qbit[indices2] = V[0,:]
+        self.svd_2qubit(indices1, indices2 gb2)
+        
