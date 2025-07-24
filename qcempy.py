@@ -24,6 +24,12 @@ class MPS:
             gate = qg.get_single_gate(gate)
       sedlf.qbit[indices]= np.dot(gate, self.qbit[indices])
 
+    def svd_2qubit(self,indices1, indices2, gb2):
+        #function to perform svd on a 2 qbit tensor
+        U,S,V =np.linalg.svd(gb2 , full_matrices=False)
+        self.qbit[indices1] = U[:,0] 
+        self.Lambda[indices1] = S[0] 
+        self.qbit[indices2] = V[0,:]
 
     def swap_qubits(self, qubit1, qubit2):
         #function to swap two qubits
@@ -32,18 +38,10 @@ class MPS:
         gate = qg.get_double_gate("SWAP")
         self.qbit[indices1], self.qbit[indices2] = np.dot(gate, self.qbit[indices1]), np.dot(gate, self.qbit[indices2])
         qb2 = np.dot(gate, qb2)
-        self.svd_2qubit(self,indices1, indices2 gb2)
+        self.svd_2qubit(indices1, indices2, gb2)
         hold = self.order[indices2]
         self.order[indices2] = self.order[indices1]
         self.order[indices1] = hold
-
-
-    def svd_2qubit(self,indices1, indices2 gb2):
-        #function to perform svd on a 2 qbit tensor
-        U,S,V =np.linalg.svd(gb2 , full_matrices=False)
-        self.qbit[indices1] = U[:,0] 
-        self.Lambda[indices1] = S[0] 
-        self.qbit[indices2] = V[0,:]
 
     def add_double_gate(self, qbit1, qbit2, gate):
         #function to add a gate that effects two qubits
@@ -70,5 +68,5 @@ class MPS:
 
         qb2 = np.tensordot(np.tensordot(self.qbit[indices1],self.Lambda[indices1],0),self.qbit[indices2],0)
         qb2 = np.dot(gate, qb2)
-        self.svd_2qubit(indices1, indices2 gb2)
+        self.svd_2qubit(indices1, indices2, gb2)
         
