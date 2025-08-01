@@ -11,10 +11,11 @@ class MPS:
     # set up order 0 - n array
     # set error for svd
     def __init__(self, N = 1, error = 0.01):
-      self.qbit = [np.array([0,1]) for _ in range(N)]
+      self.qbit   = [np.array([0,1]) for _ in range(N)]
       self.Lambda = [np.array([1]) for _ in range(N)]
-      self.order = np.array(range(0,N))
-      self.error = error
+      self.order  = np.array(range(0,N))
+      self.N      = N
+      self.error  = error
 
 
     def add_single_gate(self, qbit, gate):
@@ -31,12 +32,19 @@ class MPS:
         self.Lambda[indices1] = S[0] 
         self.qbit[indices2] = V[0,:]
 
-    def swap_qubits(self, qubit1, qubit2):
+    def combine_two_qubits(self, indices1, indices2):
+        #function to combine two qubits
+        if len(self.Lambda[indices1]) == 1:
+            return np.tensordot(np.tensordot(self.qbit[indices1],self.Lambda[indices1],0),self.qbit[indices2],0)
+        else:
+            return np.tensordot(np.tensordot(self.qbit[indices1],self.Lambda[indices1],1),self.qbit[indices2],1)
+        
+       
+
+    def swap_qubits(self, indices1, indices2):
         #function to swap two qubits
-        indices1 = np.where(self.order == qubit1)
-        indices2 = np.where(self.order == qubit2)
         gate = qg.get_double_gate("SWAP")
-        self.qbit[indices1], self.qbit[indices2] = np.dot(gate, self.qbit[indices1]), np.dot(gate, self.qbit[indices2])
+        gb2 = self.combine_two_qubits(indices1, indices2)
         qb2 = np.dot(gate, qb2)
         self.svd_2qubit(indices1, indices2, gb2)
         hold = self.order[indices2]
@@ -66,7 +74,40 @@ class MPS:
         if gate.isstring:
             gate = qg.get_double_gate(gate)
 
-        qb2 = np.tensordot(np.tensordot(self.qbit[indices1],self.Lambda[indices1],0),self.qbit[indices2],0)
+        qb2 = self.combine_two_qubits(indices1, indices2)
         qb2 = np.dot(gate, qb2)
         self.svd_2qubit(indices1, indices2, gb2)
+
+    def reorder(self):
+        #reoder the qubits to orginal order
+        while np.all(np.diff(self.order) <= 0):
+            for i in range(len(self.N)):
+                place = np.where(self.order == i)
+                if place != i:
+                    if place > i:
+                        start = i
+                        end   = place
+                    else:
+                        start = place
+                        end   = i
+                    for j in range(start,end):
+                        self.swap(j, j+1)
+                
+
+    def comtract_two_qubits(self, runingTensor, indices):
+        #function to combine two qubits
+        if len(self.Lambda[indices1]) == 1:
+            return np.tensordot(np.tensordot(runingTensor,self.Lambda[indices-1],0),self.qbit[indices],0)
+        else:
+            return np.tensordot(np.tensordot(runingTensor,self.Lambda[indices-1],1),self.qbit[indices],1)
+
+
+    def contract(self):
+        self.reorder
+        out = self.qbit[0]
+        for i in range(1,self.N):
+            out = comtract_two_qubits(out, i)
+        return out
+
+        
         
