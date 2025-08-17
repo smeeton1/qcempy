@@ -11,8 +11,8 @@ class MPS:
     # set up order 0 - n array
     # set error for svd
     def __init__(self, N = 1, error = 0.01):
-      self.qbit   = [np.array([0,1]) for _ in range(N)]
-      self.Lambda = [np.array([1]) for _ in range(N)]
+      self.qbit   = [np.array([[[0,1]]]) for _ in range(N)]
+      self.Lambda = [np.array([[1]]) for _ in range(N-1)]
       self.order  = np.array(range(0,N))
       self.N      = N
       self.error  = error
@@ -23,7 +23,7 @@ class MPS:
       indices = np.where(self.order == qbit)[0][0]
       if isinstance(gate, str):
             gate = qg.get_single_gate(gate)
-      self.qbit[indices]= np.dot(gate, self.qbit[indices])
+      self.qbit[indices]= np.einsum('ikj,jm->ikm',self.qbit[indices],gate) #  old code wand to keep for now np.dot(gate, self.qbit[indices])
 
     def svd_2qubit(self,indices1, indices2, gb2):
         #function to perform svd on a 2 qbit tensor
