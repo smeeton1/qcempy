@@ -44,7 +44,7 @@ def test_Single_Qubit_Add():
     MPStest_1qbit.add_single_gate(0, 'H')
     assert((MPStest_1qbit.qbit[0] == [1,-1] / np.sqrt(2)).all())
 
-""" def test_Swap_Qubit():
+def test_Swap_Qubit():
     MPStest_2qbit = qc.MPS(2)
     MPStest_2qbit.add_single_gate(0, 'H')
     MPStest_2qbit.swap_qubits(0,1)
@@ -54,8 +54,17 @@ def test_Single_Qubit_Add():
     assert MPStest_2qbit.order[0] == 0
     assert MPStest_2qbit.order[1] == 1
 
-def test_contract():
+def test_TensorString():
+    MPStest = qc.MPS(1)
+    test_string = "abc"
+    lambdaContract, qubitContract, outTensor = MPStest.creat_tensor_index(test_string, 1)
+    assert lambdaContract == 'abc,bd->acd'
+    assert qubitContract == 'acd,def->acef'
+    assert outTensor == 'acef'
+
+
+def test_Contract():
     MPStest_2qbit = qc.MPS(2)
     result = MPStest_2qbit.contract()
-    assert (result == [[[0,0]],[[0,1]]]).all """
+    assert (result == [[[0,0]],[[0,1]]]).all
     
