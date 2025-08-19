@@ -42,6 +42,6 @@ def get_double_gate(gate):
         case "CI":
             return np.array([[[[1, 0], [0, 0]], [[0, 1], [0, 0]]], [[[0, 0], [1, 0]], [[0, 0], [0, 1]]]])
         case "SWAP":
-            return np.array([[[[[1, 0], [0, 0]], [[0, 0], [1, 0]]], [[[0, 1], [0, 0]], [[0, 0], [0, 1]]]]])
+            return np.array([[[[1, 0], [0, 0]], [[0, 0], [1, 0]]], [[[0, 1], [0, 0]], [[0, 0], [0, 1]]]])
         case _:
             raise ValueError("Invalid gate")
