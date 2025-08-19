@@ -27,28 +27,28 @@ class MPS:
 
     def svd_2qubit(self,indices1, indices2, gb2):
         #function to perform svd on a 2 qbit tensor
-        U,S,V =np.linalg.svd(gb2 , full_matrices=False)
-        self.qbit[indices1] = U[:,0] 
-        self.Lambda[indices1] = np.array([S[0]]) 
-        self.qbit[indices2] = V[0,:]
+        U,S,V =np.linalg.svd(gb2)
+        self.qbit[indices1] = np.array([[U[0][0][1]]])
+        self.Lambda[indices1] = np.array([S[0][1]]) 
+        self.qbit[indices2] = np.array([[U[0][1][0]]])
        
 
     def combine_two_qubits(self, indices1, indices2):
         #function to combine two qubits
-        if len(self.Lambda[indices1]) == 1:
+        mid = np.einsum('ikj,kl->ijl',self.qbit[indices1],self.Lambda[indices1])
+        out = np.einsum('ijl,lkm->ijkm',mid,self.qbit[indices2])
+        return out
+        """ if len(self.Lambda[indices1]) == 1:
             return np.tensordot(np.tensordot(self.qbit[indices1],self.Lambda[indices1],0),self.qbit[indices2],0)
         else:
-            return np.tensordot(np.tensordot(self.qbit[indices1],self.Lambda[indices1],1),self.qbit[indices2],1)
+            return np.tensordot(np.tensordot(self.qbit[indices1],self.Lambda[indices1],1),self.qbit[indices2],1) """
         
 
     def swap_qubits(self, indices1, indices2):
         #function to swap two qubits
         gate = qg.get_double_gate("SWAP")
         qb2 = self.combine_two_qubits(indices1, indices2)
-        qb2 = np.concatenate((qb2[0], qb2[1]))
-        qb2 = np.concatenate((qb2[0], qb2[1]))
-        qb2 = np.dot(gate, qb2)
-        qb2 = np.array(np.split(qb2, 2))
+        qb2 = np.einsum('iljk,mnlk->imnj',qb2,gate)
         self.svd_2qubit(indices1, indices2, qb2)
         hold = self.order[indices2]
         self.order[indices2] = self.order[indices1]
@@ -78,10 +78,7 @@ class MPS:
             gate = qg.get_double_gate(gate)
         
         qb2 = self.combine_two_qubits(indices1, indices2)
-        qb2 = np.concatenate((qb2[0], qb2[1]))
-        qb2 = np.concatenate((qb2[0], qb2[1]))
-        qb2 = np.dot(gate, qb2)
-        qb2 = np.array(np.split(qb2, 2))
+        qb2 = np.einsum('iljk,mnlk->imnj',qb2,gate)
         self.svd_2qubit(indices1, indices2, qb2)
 
     def reorder(self):
