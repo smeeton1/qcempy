@@ -94,21 +94,30 @@ class MPS:
                         for j in range(place,i):
                             self.swap_qubits(j, j+1)
                     
-                
+    def creat_tensor_index(self, tensorIndexes, indices):
+        indexContract = tensorIndexes[indices]
+        nextChar = chr(ord(tensorIndexes[-1])+1)
+        lambdaContract = tensorIndexes + ',' + indexContract + nextChar + '->'
+        reducedTens = tensorIndexes.replace(tensorIndexes[indices], '') + nextChar 
+        lambdaContract = lambdaContract + reducedTens
+        nextQbit = reducedTens[-1] + chr(ord(nextChar)+1) + chr(ord(nextChar)+2)
+        outTensor = reducedTens[:-1] + nextQbit[1:]
+        qubitContract = reducedTens + ',' + nextQbit + '->' + outTensor
+        return lambdaContract, qubitContract, outTensor 
 
-    def contract_two_qubits(self, runingTensor, indices):
+    def contract_two_qubits(self, runingTensor, tensorIndexes, indices):
         #function to combine two qubits
-        if len(self.Lambda[indices]) == 1:
-            return np.tensordot(np.tensordot(runingTensor,self.Lambda[indices-1],0),self.qbit[indices],0)
-        else:
-            return np.tensordot(np.tensordot(runingTensor,self.Lambda[indices-1],1),self.qbit[indices],1)
+        lambdaContract, qubitContract, outTensor = self.creat_tensor_index(tensorIndexes, indices)
+        mid = np.einsum(lambdaContract,runingTensor,self.Lambda[indices-1])
+        return np.einsum(qubitContract,mid,self.qbit[indices]), outTensor
 
 
     def contract(self):
         self.reorder
         out = self.qbit[0]
+        tensorIndexes = 'abc'
         for i in range(1,self.N):
-            out = self.contract_two_qubits(out, i)
+            out, tensorIndexes = self.contract_two_qubits(out,tensorIndexes, i)
         return out
 
         
