@@ -1,10 +1,11 @@
-# This contains the functions to generate the arrays for gates.
+''' This contains the functions to generate the arrays for gates.'''
 
 import numpy as np
 
 
 def get_single_gate(gate):
-    # function to get matrix for single qbit gate
+    '''Function to get matrix for single qbit gate
+    gate: string indicating the gate.'''
     match gate:
         case "X":
             return np.array([[0, 1], [1, 0]])
@@ -25,7 +26,8 @@ def get_single_gate(gate):
 
 
 def get_double_gate(gate):
-    # function to get matrix for two qbit gate
+    '''Function to get matrix for two qbit gate.
+    gate: string indicating the gate.'''
     match gate:
         case "CX":
             return np.array([[[[1, 0], [0, 0]], [[0, 1], [0, 0]]], [[[0, 0], [0, 1]], [[0, 0], [1, 0]]]])

@@ -6,10 +6,10 @@ import qgempy as qg
 
 
 class MPS:
-    # Class to hold the MPS data 
-    # setup n q-tensor and n-1 l-tensor
-    # set up order 0 - n array
-    # set error for svd
+    ''' Class to hold the MPS data 
+    setup n q-tensor and n-1 l-tensor
+    set up order 0 - n array
+    set error for svd '''
     def __init__(self, N = 1, error = 0.01):
       self.qbit   = [np.array([[[0,1]]]) for _ in range(N)]
       self.Lambda = [np.array([[1]]) for _ in range(N-1)]
@@ -19,14 +19,20 @@ class MPS:
 
 
     def add_single_gate(self, qbit, gate):
-      # function to add a gate to one qubit.
+      '''Function to add a gate to one qubit.
+        qbit: the qubit to apply the gate to.
+        gate: the gate to be added. Either a tensor or string. 
+      '''
       indices = np.where(self.order == qbit)[0][0]
       if isinstance(gate, str):
             gate = qg.get_single_gate(gate)
       self.qbit[indices]= np.einsum('ikj,jm->ikm',self.qbit[indices],gate) #  old code wand to keep for now np.dot(gate, self.qbit[indices])
 
     def svd_2qubit(self,indices1, indices2, gb2):
-        #function to perform svd on a 2 qbit tensor
+        '''Function to perform svd on a 2 qbit tensor
+        indices1: index of qbit 1.
+        indices2: index of qbit 2.
+        gb2: tensor '''
         U,S,V =np.linalg.svd(gb2)
         self.qbit[indices1] = np.array([[U[0][0][1]]])
         self.Lambda[indices1] = np.array([S[0][1]]) 
@@ -34,18 +40,22 @@ class MPS:
        
 
     def combine_two_qubits(self, indices1, indices2):
-        #function to combine two qubits
+        '''Function to combine two qubits
+        indices1: index of first qbit.
+        indices2: index of second qbit.'''
         mid = np.einsum('ikj,kl->ijl',self.qbit[indices1],self.Lambda[indices1])
         out = np.einsum('ijl,lkm->ijkm',mid,self.qbit[indices2])
         return out
-        """ if len(self.Lambda[indices1]) == 1:
-            return np.tensordot(np.tensordot(self.qbit[indices1],self.Lambda[indices1],0),self.qbit[indices2],0)
-        else:
-            return np.tensordot(np.tensordot(self.qbit[indices1],self.Lambda[indices1],1),self.qbit[indices2],1) """
+        #if len(self.Lambda[indices1]) == 1:
+        #    return np.tensordot(np.tensordot(self.qbit[indices1],self.Lambda[indices1],0),self.qbit[indices2],0)
+        #else:
+        #    return np.tensordot(np.tensordot(self.qbit[indices1],self.Lambda[indices1],1),self.qbit[indices2],1) """
         
 
     def swap_qubits(self, indices1, indices2):
-        #function to swap two qubits
+        '''Function to swap two qubits
+        indices1: index of first qbit.
+        indices2: index of second qbit.'''
         gate = qg.get_double_gate("SWAP")
         qb2 = self.combine_two_qubits(indices1, indices2)
         qb2 = np.einsum('iljk,mnlk->imnj',qb2,gate)
@@ -55,7 +65,11 @@ class MPS:
         self.order[indices1] = hold
 
     def add_double_gate(self, qbit1, qbit2, gate):
-        #function to add a gate that effects two qubits
+        '''Function to add a gate that effects two qubits
+        qbit1: the qubit to apply the gate to.
+        qbit2: the qubit to apply the gate to.
+        gate: the gate to be added. Either a tensor or string. '''
+        
         indices1 = np.where(self.order == qbit1)[0][0]
         indices2 = np.where(self.order == qbit2)[0][0]
         if abs(indices1 - indices2) > 1:
@@ -82,7 +96,7 @@ class MPS:
         self.svd_2qubit(indices1, indices2, qb2)
 
     def reorder(self):
-        #reoder the qubits to orginal order
+        '''Reoder the qubits to orginal order'''
         while np.all(np.diff(self.order) <= 0):
             for i in range(self.N):
                 place = np.where(self.order == i)[0][0]
@@ -95,6 +109,10 @@ class MPS:
                             self.swap_qubits(j, j+1)
                     
     def creat_tensor_index(self, tensorIndexes, indices):
+        '''Creates indices for tensor contraction.
+        tensorIndexes: current tensaor indexes for large Tensor.
+        indices: qbit number.
+        '''
         indexContract = tensorIndexes[indices]
         nextChar = chr(ord(tensorIndexes[-1])+1)
         lambdaContract = tensorIndexes + ',' + indexContract + nextChar + '->'
@@ -106,13 +124,18 @@ class MPS:
         return lambdaContract, qubitContract, outTensor 
 
     def contract_two_qubits(self, runingTensor, tensorIndexes, indices):
-        #function to combine two qubits
+        '''Function to combine two qubits
+        runingTensor: tensor to be contracted into.
+        tensorIndexes: indexes for runingTensor.
+        indices: qbit to be contracted with.
+        '''
         lambdaContract, qubitContract, outTensor = self.creat_tensor_index(tensorIndexes, indices)
         mid = np.einsum(lambdaContract,runingTensor,self.Lambda[indices-1])
         return np.einsum(qubitContract,mid,self.qbit[indices]), outTensor
 
 
     def contract(self):
+        '''Contracts the network.'''
         self.reorder
         out = self.qbit[0]
         tensorIndexes = 'abc'
